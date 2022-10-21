@@ -26,7 +26,7 @@ EservAutoReport --help
   "city": "昌平区",
   "district": "", // 区县
   "address": "城北街道东关二条14-2号阳光学生公寓",
-  "remote-url": "", // 远程的Selenium服务端，比如 1.1.1.1:4444/wd/hub；为空表示使用本机Selenium
+  "remote-url": "", // 远程的Selenium服务端，比如 http://1.1.1.1:4444/wd/hub；为空表示使用本机Selenium
   "email": "__你的邮箱__",
   "email_password": "__你的邮箱秘钥__",
   "smtp": "__SMTP服务地址__",
