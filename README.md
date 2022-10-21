@@ -14,4 +14,4 @@ pip3 install git+https://github.com/Rhythmicc/EservAutoReport.git -U
 EservAutoReport --help
 ```
 
-初次运行会自动引导配置，其中`区县`可以不填；`email`如果填写，表示启用邮箱通知，你需要正确填写相关配置项。
+初次运行会自动引导配置，其中`用户名`和`密码`需要填写统一认证登录账号密码，`区县`可以不填；`email`如果填写，表示启用邮箱通知，你需要正确填写相关配置项。
