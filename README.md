@@ -1,5 +1,7 @@
 <h1 style="text-align: center"> EservAutoReport </h1>
 
+！！！免责声明：本项目仅供学习，用作它途发生的一切后果与本项目无关！！！
+
 ## 安装
 
 ```shell
