@@ -154,7 +154,7 @@ def _report():
     QproDefaultConsole.print(QproInfoString, "上报成功!")
     driver.quit()
 
-    email(1)
+    email()
 
 
 @app.command()
