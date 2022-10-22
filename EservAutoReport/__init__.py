@@ -4,9 +4,9 @@ name = "EservAutoReport"
 
 from .__config__ import *
 
-config: EservAutoReportConfig = None
+_config: EservAutoReportConfig = None
 if enable_config:
-    config = EservAutoReportConfig()
+    _config = EservAutoReportConfig()
 
 import sys
 from QuickProject import user_pip, _ask, external_exec

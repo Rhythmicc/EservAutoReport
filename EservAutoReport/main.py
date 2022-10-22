@@ -1,23 +1,24 @@
 from re import A
 from QuickProject.Commander import Commander
 from . import *
+from . import _config
 import time
 
 app = Commander()
 
 
 def email(status: str = None):
-    if not (_email := config.select("email")):
+    if not (_email := _config.select("email")):
         return
     current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     if not status:
         requirePackage(".RawSender", "Sender")(
-            _email, config.select("email_password"), config.select("smtp"), "CUP自动填报"
-        ).send([config.select("to")], "【学生每日填报】上报成功", f"上报成功: {current_time}")
+            _email, _config.select("email_password"), _config.select("smtp"), "CUP自动填报"
+        ).send([_config.select("to")], "【学生每日填报】上报成功", f"上报成功: {current_time}")
     else:
         requirePackage(".RawSender", "Sender")(
-            _email, config.select("email_password"), config.select("smtp"), "CUP自动填报"
-        ).send([config.select("to")], "【学生每日填报】上报失败", f"上报失败: {status}")
+            _email, _config.select("email_password"), _config.select("smtp"), "CUP自动填报"
+        ).send([_config.select("to")], "【学生每日填报】上报失败", f"上报失败: {status}")
 
 
 def _report():
@@ -25,10 +26,10 @@ def _report():
     from selenium.webdriver.common.by import By
 
     with QproDefaultConsole.status("正在打开浏览器...") as st:
-        if config.select("remote-url"):
+        if _config.select("remote-url"):
             st.update("正在打开远程浏览器...")
             driver = webdriver.Remote(
-                command_executor=config.select("remote-url"),
+                command_executor=_config.select("remote-url"),
                 desired_capabilities=webdriver.DesiredCapabilities.CHROME,
             )
         else:
@@ -47,8 +48,8 @@ def _report():
 
         driver.switch_to.frame("loginIframe")
         inputs = driver.find_elements(By.TAG_NAME, "input")
-        inputs[0].send_keys(config.select("username"))
-        inputs[1].send_keys(config.select("password"))
+        inputs[0].send_keys(_config.select("username"))
+        inputs[1].send_keys(_config.select("password"))
 
         driver.find_element(By.CLASS_NAME, "login_btn").click()
 
@@ -108,7 +109,7 @@ def _report():
         sps = provinces.find_elements(By.TAG_NAME, "span")
 
         for sp in sps:
-            if sp.text == config.select("province"):
+            if sp.text == _config.select("province"):
                 sp.click()
                 break
 
@@ -116,21 +117,21 @@ def _report():
         sps = cities.find_elements(By.TAG_NAME, "span")
 
         for sp in sps:
-            if sp.text == config.select("city"):
+            if sp.text == _config.select("city"):
                 sp.click()
                 break
 
-        if config.select("district"):
+        if _config.select("district"):
             county = region_panel.find_element(By.CLASS_NAME, "county")
             sps = county.find_elements(By.TAG_NAME, "span")
             for sp in sps:
-                if sp.text == config.select("district"):
+                if sp.text == _config.select("district"):
                     sp.click()
                     break
 
         address = region_panel.find_element(By.CLASS_NAME, "address")
         textarea = address.find_element(By.TAG_NAME, "textarea")
-        textarea.send_keys(config.select("address"))
+        textarea.send_keys(_config.select("address"))
         region_panel.find_element(By.CLASS_NAME, "sure").click()
 
         tr12 = trs[12]
@@ -187,9 +188,9 @@ def config(key: str, value: str = None):
     配置文件
     """
     if value:
-        config.set(key, value)
+        _config.set(key, value)
     else:
-        QproDefaultConsole.print(QproInfoString, f'"{key}": "{config.select(key)}"')
+        QproDefaultConsole.print(QproInfoString, f'"{key}": "{_config.select(key)}"')
 
 
 def main():
