@@ -1,3 +1,4 @@
+from re import A
 from QuickProject.Commander import Commander
 from . import *
 import time
@@ -5,11 +6,21 @@ import time
 app = Commander()
 
 
-@app.command()
-def report():
-    """
-    自动上报
-    """
+def email(status: str = None):
+    if not (_email := config.select("email")):
+        return
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    if not status:
+        requirePackage(".RawSender", "Sender")(
+            _email, config.select("email_password"), config.select("smtp"), "CUP自动填报"
+        ).send([config.select("to")], "【学生每日填报】上报成功", f"上报成功: {current_time}")
+    else:
+        requirePackage(".RawSender", "Sender")(
+            _email, config.select("email_password"), config.select("smtp"), "CUP自动填报"
+        ).send([config.select("to")], "【学生每日填报】上报失败", f"上报失败: {status}")
+
+
+def _report():
     from selenium import webdriver
     from selenium.webdriver.common.by import By
 
@@ -56,6 +67,14 @@ def report():
             span = li.find_element(By.TAG_NAME, "span")
             if span.text == "学生每日填报":
                 break
+
+        if not span:
+            from QuickProject import QproErrorString
+
+            QproDefaultConsole.print(QproErrorString, "未找到上报信息")
+            driver.quit()
+            email("未找到上报信息")
+            return
 
         st.update("正在进入上报页面...")
 
@@ -123,6 +142,8 @@ def report():
         td1 = tr15.find_elements(By.TAG_NAME, "td")[0]
         td1.find_element(By.TAG_NAME, "input").click()
 
+        st.update("正在提交上报信息...")
+
         time.sleep(1)  # 等待 css 动画
 
         driver.find_element(By.CLASS_NAME, "help_btn").click()
@@ -132,12 +153,21 @@ def report():
     QproDefaultConsole.print(QproInfoString, "上报成功!")
     driver.quit()
 
-    if email := config.select("email"):
-        current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    email(1)
 
-        requirePackage(".RawSender", "Sender")(
-            email, config.select("email_password"), config.select("smtp"), "CUP自动填报"
-        ).send([config.select("to")], "【学生每日填报】上报成功", f"上报成功: {current_time}")
+
+@app.command()
+def report():
+    """
+    自动上报
+    """
+    try:
+        _report()
+    except Exception as e:
+        from QuickProject import QproErrorString
+
+        QproDefaultConsole.print(QproErrorString, e)
+        email(e)
 
 
 @app.command()
