@@ -25,7 +25,7 @@ setup(
     install_requires=["Qpro", "selenium"],
     entry_points={
         "console_scripts": [
-            "EservAutoReport = EservAutoReport.main:main",
+            "cup-ear = EservAutoReport.main:main",
         ]
     },
 )
