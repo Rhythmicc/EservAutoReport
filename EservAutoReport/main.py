@@ -37,7 +37,7 @@ def _report():
 
             options = Options()
             options.add_argument("--headless")
-            driver = webdriver.Chrome()
+            driver = webdriver.Chrome(options=options)
 
         st.update("正在进入上报页面...")
         driver.get("https://eserv.cup.edu.cn/v2/matter/fill")
@@ -183,7 +183,7 @@ def reset():
 
 
 @app.command()
-def config(key: str, value: str = None):
+def config(key: str, value: str = ""):
     """
     配置文件
     """
