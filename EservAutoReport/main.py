@@ -4,7 +4,7 @@ from . import *
 from . import _config
 import time
 
-app = Commander()
+app = Commander(name)
 
 
 def email(status: str = None):
