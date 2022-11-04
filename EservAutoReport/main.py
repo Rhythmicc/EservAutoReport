@@ -173,7 +173,7 @@ def report(user: str):
         from QuickProject import QproErrorString
 
         QproDefaultConsole.print(QproErrorString, e)
-        email(e)
+        email(_config.select(user).get("to"), e)
 
 
 @app.command()
