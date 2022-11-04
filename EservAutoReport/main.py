@@ -5,11 +5,10 @@ from . import _config
 import time
 
 app = Commander(name)
+settings = _config.select("global")
 
 
 def email(to: list, status: str = None):
-    settings = _config.select("global")
-
     if not (_email := settings.get("email", None)):
         return
     current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
@@ -23,26 +22,12 @@ def email(to: list, status: str = None):
         ).send(to, "【学生每日填报】上报失败", f"上报失败: {status}")
 
 
-def _report(user: str):
+def _report(user: str, driver=None):
     infos = _config.select(user)
-    settings = _config.select("global")
 
-    from selenium import webdriver
     from selenium.webdriver.common.by import By
 
     with QproDefaultConsole.status("正在打开浏览器...") as st:
-        if settings.get("remote-url", None):
-            st.update("正在打开远程浏览器...")
-            driver = webdriver.Remote(
-                command_executor=settings.get("remote-url", None),
-                desired_capabilities=webdriver.DesiredCapabilities.CHROME,
-            )
-        else:
-            from selenium.webdriver.chrome.options import Options
-
-            options = Options()
-            options.add_argument("--headless")
-            driver = webdriver.Chrome(options=options)
 
         st.update("正在进入上报页面...")
         driver.get("https://eserv.cup.edu.cn/v2/matter/fill")
@@ -168,12 +153,29 @@ def report(user: str):
     自动上报
     """
     try:
-        _report(user)
+        with QproDefaultConsole.status("正在打开浏览器...") as st:
+            from selenium import webdriver
+
+            if settings.get("remote-url", None):
+                st.update("正在打开远程浏览器...")
+                driver = webdriver.Remote(
+                    command_executor=settings.get("remote-url", None),
+                    desired_capabilities=webdriver.DesiredCapabilities.CHROME,
+                )
+            else:
+                from selenium.webdriver.chrome.options import Options
+
+                options = Options()
+                options.add_argument("--headless")
+                driver = webdriver.Chrome(options=options)
+        _report(user, driver)
+        driver.quit()
     except Exception as e:
         from QuickProject import QproErrorString
 
         QproDefaultConsole.print(QproErrorString, e)
         email(_config.select(user).get("to"), e)
+        driver.quit()
 
 
 @app.command()
