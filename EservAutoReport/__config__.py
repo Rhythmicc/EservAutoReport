@@ -5,7 +5,7 @@ from QuickProject import user_root, user_lang, QproDefaultConsole, QproInfoStrin
 enable_config = True
 config_path = os.path.join(user_root, ".EservAutoReport_config")
 
-questions = {
+user_questions = {
     "username": {
         "type": "input",
         "message": "Username" if user_lang != "zh" else "用户名",
@@ -30,6 +30,13 @@ questions = {
         "type": "input",
         "message": "Address" if user_lang != "zh" else "详细地址",
     },
+    "to": {
+        "type": "input",
+        "message": "To" if user_lang != "zh" else "收件人",
+    },
+}
+
+global_questions = {
     "remote-url": {
         "type": "input",
         "message": "Remote Selenium URL" if user_lang != "zh" else "远程 Selenium URL",
@@ -46,17 +53,21 @@ questions = {
         "type": "input",
         "message": "SMTP" if user_lang != "zh" else "SMTP服务器",
     },
-    "to": {
-        "type": "input",
-        "message": "To" if user_lang != "zh" else "收件人",
-    },
 }
 
 
-def init_config():
+def init_config(
+    user: str = _ask(
+        {"type": "input", "message": "Username" if user_lang != "zh" else "用户名"}
+    )
+):
     with open(config_path, "w") as f:
+        user_config = {i: _ask(user_questions[i]) for i in user_questions}
+        global_config = {i: _ask(global_questions[i]) for i in global_questions}
         json.dump(
-            {i: _ask(questions[i]) for i in questions}, f, indent=4, ensure_ascii=False
+            {user: user_config, "global": global_config},
+            f,
+            indent=4,
         )
     QproDefaultConsole.print(
         QproInfoString,
@@ -79,8 +90,8 @@ class EservAutoReportConfig:
                 init_config()
 
     def select(self, key):
-        if key not in self.config and key in questions:
-            self.update(key, _ask(questions[key]))
+        if key not in self.config:
+            self.update(key, {i: _ask(user_questions[i]) for i in user_questions})
         return self.config[key]
 
     def update(self, key, value):

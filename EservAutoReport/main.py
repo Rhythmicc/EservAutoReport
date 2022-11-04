@@ -7,29 +7,34 @@ import time
 app = Commander(name)
 
 
-def email(status: str = None):
-    if not (_email := _config.select("email")):
+def email(to: list, status: str = None):
+    settings = _config.select("global")
+
+    if not (_email := settings.get("email", None)):
         return
     current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     if not status:
         requirePackage(".RawSender", "Sender")(
-            _email, _config.select("email_password"), _config.select("smtp"), "CUP自动填报"
-        ).send([_config.select("to")], "【学生每日填报】上报成功", f"上报成功: {current_time}")
+            _email, settings.get("email_password"), settings.get("smtp"), "CUP自动填报"
+        ).send(to, "【学生每日填报】上报成功", f"上报成功: {current_time}")
     else:
         requirePackage(".RawSender", "Sender")(
-            _email, _config.select("email_password"), _config.select("smtp"), "CUP自动填报"
-        ).send([_config.select("to")], "【学生每日填报】上报失败", f"上报失败: {status}")
+            _email, settings.get("email_password"), settings.get("smtp"), "CUP自动填报"
+        ).send(to, "【学生每日填报】上报失败", f"上报失败: {status}")
 
 
-def _report():
+def _report(user: str):
+    infos = _config.select(user)
+    settings = _config.select("global")
+
     from selenium import webdriver
     from selenium.webdriver.common.by import By
 
     with QproDefaultConsole.status("正在打开浏览器...") as st:
-        if _config.select("remote-url"):
+        if settings.get("remote-url", None):
             st.update("正在打开远程浏览器...")
             driver = webdriver.Remote(
-                command_executor=_config.select("remote-url"),
+                command_executor=settings.get("remote-url", None),
                 desired_capabilities=webdriver.DesiredCapabilities.CHROME,
             )
         else:
@@ -48,8 +53,8 @@ def _report():
 
         driver.switch_to.frame("loginIframe")
         inputs = driver.find_elements(By.TAG_NAME, "input")
-        inputs[0].send_keys(_config.select("username"))
-        inputs[1].send_keys(_config.select("password"))
+        inputs[0].send_keys(infos.get("username"))
+        inputs[1].send_keys(infos.get("password"))
 
         driver.find_element(By.CLASS_NAME, "login_btn").click()
 
@@ -74,7 +79,7 @@ def _report():
 
             QproDefaultConsole.print(QproErrorString, "未找到上报信息")
             driver.quit()
-            email("未找到上报信息")
+            email([infos.get("to")], "未找到上报信息")
             return
 
         st.update("正在进入上报页面...")
@@ -109,7 +114,7 @@ def _report():
         sps = provinces.find_elements(By.TAG_NAME, "span")
 
         for sp in sps:
-            if sp.text == _config.select("province"):
+            if sp.text == infos.get("province"):
                 sp.click()
                 break
 
@@ -117,21 +122,21 @@ def _report():
         sps = cities.find_elements(By.TAG_NAME, "span")
 
         for sp in sps:
-            if sp.text == _config.select("city"):
+            if sp.text == infos.get("city"):
                 sp.click()
                 break
 
-        if _config.select("district"):
+        if infos.get("district"):
             county = region_panel.find_element(By.CLASS_NAME, "county")
             sps = county.find_elements(By.TAG_NAME, "span")
             for sp in sps:
-                if sp.text == _config.select("district"):
+                if sp.text == infos.get("district"):
                     sp.click()
                     break
 
         address = region_panel.find_element(By.CLASS_NAME, "address")
         textarea = address.find_element(By.TAG_NAME, "textarea")
-        textarea.send_keys(_config.select("address"))
+        textarea.send_keys(infos.get("address"))
         region_panel.find_element(By.CLASS_NAME, "sure").click()
 
         tr12 = trs[12]
@@ -154,16 +159,16 @@ def _report():
     QproDefaultConsole.print(QproInfoString, "上报成功!")
     driver.quit()
 
-    email()
+    email([infos.get("to")])
 
 
 @app.command()
-def report():
+def report(user: str):
     """
     自动上报
     """
     try:
-        _report()
+        _report(user)
     except Exception as e:
         from QuickProject import QproErrorString
 
