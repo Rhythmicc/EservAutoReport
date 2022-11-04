@@ -56,11 +56,7 @@ global_questions = {
 }
 
 
-def init_config(
-    user: str = _ask(
-        {"type": "input", "message": "Username" if user_lang != "zh" else "用户名"}
-    )
-):
+def init_config(user: str):
     with open(config_path, "w") as f:
         user_config = {i: _ask(user_questions[i]) for i in user_questions}
         global_config = {i: _ask(global_questions[i]) for i in global_questions}
@@ -80,7 +76,14 @@ def init_config(
 class EservAutoReportConfig:
     def __init__(self):
         if not os.path.exists(config_path):
-            init_config()
+            init_config(
+                _ask(
+                    {
+                        "type": "input",
+                        "message": "Username" if user_lang != "zh" else "用户名",
+                    }
+                )
+            )
         while True:
             try:
                 with open(config_path, "r") as f:
