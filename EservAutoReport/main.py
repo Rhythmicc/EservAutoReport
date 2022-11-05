@@ -28,7 +28,6 @@ def _report(user: str, driver=None):
     from selenium.webdriver.common.by import By
 
     with QproDefaultConsole.status("正在打开浏览器...") as st:
-
         st.update("正在进入上报页面...")
         driver.get("https://eserv.cup.edu.cn/v2/matter/fill")
 
@@ -142,8 +141,6 @@ def _report(user: str, driver=None):
         time.sleep(10)  # 等待提交成功
 
     QproDefaultConsole.print(QproInfoString, "上报成功!")
-    driver.quit()
-
     email([infos.get("to")])
 
 
@@ -152,10 +149,11 @@ def report(user: str):
     """
     自动上报
     """
-    try:
-        with QproDefaultConsole.status("正在打开浏览器...") as st:
-            from selenium import webdriver
+    from selenium import webdriver
 
+    try:
+        driver: webdriver.WebDriver = None
+        with QproDefaultConsole.status("正在打开浏览器...") as st:
             if settings.get("remote-url", None):
                 st.update("正在打开远程浏览器...")
                 driver = webdriver.Remote(
