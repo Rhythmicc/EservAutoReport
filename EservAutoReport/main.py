@@ -62,7 +62,7 @@ def _report(user: str, driver=None):
             from QuickProject import QproErrorString
 
             QproDefaultConsole.print(QproErrorString, "未找到上报信息")
-            driver.quit()
+            driver.close()
             email([infos.get("to")], "未找到上报信息")
             return
 
@@ -167,13 +167,13 @@ def report(user: str):
                 options.add_argument("--headless")
                 driver = webdriver.Chrome(options=options)
         _report(user, driver)
-        driver.quit()
+        driver.close()
     except Exception as e:
         from QuickProject import QproErrorString
 
         QproDefaultConsole.print(QproErrorString, e)
         email(_config.select(user).get("to"), e)
-        driver.quit()
+        driver.close()
 
 
 @app.command()
