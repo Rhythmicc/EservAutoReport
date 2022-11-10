@@ -171,9 +171,11 @@ def report(user: str):
     except Exception as e:
         from QuickProject import QproErrorString
 
+        driver.close()
+
         QproDefaultConsole.print(QproErrorString, e)
         email(_config.select(user).get("to"), e)
-        driver.close()
+        raise e
 
 
 @app.command()
