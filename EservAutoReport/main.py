@@ -1,4 +1,4 @@
-from re import A
+from selenium import webdriver
 from QuickProject.Commander import Commander
 from . import *
 from . import _config
@@ -22,7 +22,7 @@ def email(to: list, status: str = None):
         ).send(to, "【学生每日填报】上报失败", f"上报失败: {status}")
 
 
-def _report(user: str, driver=None):
+def _report(user: str, driver: webdriver.Remote = None):
     infos = _config.select(user)
 
     from selenium.webdriver.common.by import By
@@ -31,7 +31,7 @@ def _report(user: str, driver=None):
         st.update("正在进入上报页面...")
         driver.get("https://eserv.cup.edu.cn/v2/matter/fill")
 
-        time.sleep(1)
+        driver.implicitly_wait(1)
 
         st.update("正在登录...")
 
@@ -42,13 +42,13 @@ def _report(user: str, driver=None):
 
         driver.find_element(By.CLASS_NAME, "login_btn").click()
 
-        time.sleep(1)
+        driver.implicitly_wait(1)
 
         st.update("正在查找上报信息...")
 
         driver.switch_to.default_content()
 
-        time.sleep(5)
+        driver.implicitly_wait(5)
 
         ul = driver.find_element(By.CLASS_NAME, "matter_list_data")
         lis = ul.find_elements(By.TAG_NAME, "li")
@@ -70,7 +70,7 @@ def _report(user: str, driver=None):
 
         span.click()
 
-        time.sleep(10)
+        driver.implicitly_wait(10)
 
         st.update("正在填写上报信息...")
 
@@ -134,11 +134,12 @@ def _report(user: str, driver=None):
 
         st.update("正在提交上报信息...")
 
-        time.sleep(1)  # 等待 css 动画
+        driver.implicitly_wait(1)
 
         driver.find_element(By.CLASS_NAME, "help_btn").click()
         driver.find_element(By.CLASS_NAME, "zl-button-primary").click()
-        time.sleep(10)  # 等待提交成功
+
+        driver.implicitly_wait(10)  # 等待提交成功
 
     QproDefaultConsole.print(QproInfoString, "上报成功!")
     email([infos.get("to")])
@@ -154,10 +155,10 @@ def report(user: str):
     try:
         driver: webdriver.WebDriver = None
         with QproDefaultConsole.status("正在打开浏览器...") as st:
-            if settings.get("remote-url", None):
+            if remote_url := settings.get("remote-url", None):
                 st.update("正在打开远程浏览器...")
                 driver = webdriver.Remote(
-                    command_executor=settings.get("remote-url", None),
+                    command_executor=remote_url,
                     desired_capabilities=webdriver.DesiredCapabilities.CHROME,
                 )
             else:
@@ -171,7 +172,10 @@ def report(user: str):
     except Exception as e:
         from QuickProject import QproErrorString
 
-        driver.close()
+        if remote_url:
+            driver.close()
+        else:
+            driver.quit()
 
         QproDefaultConsole.print(QproErrorString, e)
         email(_config.select(user).get("to"), e)
