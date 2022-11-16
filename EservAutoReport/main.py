@@ -2,7 +2,6 @@ from selenium import webdriver
 from QuickProject.Commander import Commander
 from . import *
 from . import _config
-import time
 
 app = Commander(name)
 settings = _config.select("global")
@@ -11,7 +10,9 @@ settings = _config.select("global")
 def email(to: list, status: str = None):
     if not (_email := settings.get("email", None)):
         return
-    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    import datetime
+
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     if not status:
         requirePackage(".RawSender", "Sender")(
             _email, settings.get("email_password"), settings.get("smtp"), "CUP自动填报"
