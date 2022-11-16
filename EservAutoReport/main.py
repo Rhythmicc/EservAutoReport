@@ -205,6 +205,21 @@ def config(key: str, value: str = ""):
         QproDefaultConsole.print(QproInfoString, f'"{key}": "{_config.select(key)}"')
 
 
+@app.command()
+def update():
+    """
+    更新
+    """
+    from . import external_exec
+
+    with QproDefaultConsole.status("正在更新..."):
+        external_exec(
+            f"{user_pip} install git+https://github.com/Rhythmicc/EservAutoReport.git -U",
+            True,
+        )
+    QproDefaultConsole.print(QproInfoString, "更新成功!")
+
+
 def main():
     """
     注册为全局命令时, 默认采用main函数作为命令入口, 请勿将此函数用作它途.
