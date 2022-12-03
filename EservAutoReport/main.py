@@ -32,6 +32,7 @@ def login(driver, By, infos):
     driver.find_element(By.CLASS_NAME, "login_btn").click()
 
     driver.implicitly_wait(1)
+    driver.switch_to.default_content()
 
 
 def _report(user: str, driver: webdriver.Remote = None, debug: bool = False):
@@ -50,8 +51,6 @@ def _report(user: str, driver: webdriver.Remote = None, debug: bool = False):
         login(driver, By, infos)
 
         st.update("正在查找上报信息")
-
-        driver.switch_to.default_content()
 
         driver.implicitly_wait(5)
 
