@@ -3,7 +3,7 @@ from QuickProject.Commander import Commander
 from . import *
 from . import _config
 
-app = Commander(name)
+app = Commander("cup-ear")
 settings = _config.select("global")
 
 
