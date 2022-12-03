@@ -257,7 +257,7 @@ def _report(user: str, driver: webdriver.Remote = None, debug: bool = False):
 def report():
     users = _config.config
     return [
-        {"name": i, "description": users[i].get("name"), "icon": "👤"}
+        {"name": i, "description": users[i].get("username"), "icon": "👤"}
         for i in users.keys()
         if i != "global"
     ]
