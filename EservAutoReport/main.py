@@ -253,6 +253,16 @@ def _report(user: str, driver: webdriver.Remote = None, debug: bool = False):
     email([infos.get("to")])
 
 
+@app.custom_complete("user")
+def report():
+    users = _config.config
+    return [
+        {"name": i, "description": users[i].get("name"), "icon": "👤"}
+        for i in users.keys()
+        if i != "global"
+    ]
+
+
 @app.command()
 def report(user: str, _debug: bool = False):
     """
