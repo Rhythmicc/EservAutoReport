@@ -23,29 +23,33 @@ def email(to: list, status: str = None):
         ).send(to, "【学生每日填报】上报失败", f"上报失败: {status}")
 
 
-def _report(user: str, driver: webdriver.Remote = None):
+def login(driver, By, infos):
+    driver.switch_to.frame("loginIframe")
+    inputs = driver.find_elements(By.TAG_NAME, "input")
+    inputs[0].send_keys(infos.get("username"))
+    inputs[1].send_keys(infos.get("password"))
+
+    driver.find_element(By.CLASS_NAME, "login_btn").click()
+
+    driver.implicitly_wait(1)
+
+
+def _report(user: str, driver: webdriver.Remote = None, debug: bool = False):
     infos = _config.select(user)
 
     from selenium.webdriver.common.by import By
 
-    with QproDefaultConsole.status("正在打开浏览器...") as st:
-        st.update("正在进入上报页面...")
+    with QproDefaultConsole.status("正在打开浏览器") as st:
+        st.update("正在进入上报页面")
         driver.get("https://eserv.cup.edu.cn/v2/matter/fill")
 
         driver.implicitly_wait(1)
 
-        st.update("正在登录...")
+        st.update("正在登录")
 
-        driver.switch_to.frame("loginIframe")
-        inputs = driver.find_elements(By.TAG_NAME, "input")
-        inputs[0].send_keys(infos.get("username"))
-        inputs[1].send_keys(infos.get("password"))
+        login(driver, By, infos)
 
-        driver.find_element(By.CLASS_NAME, "login_btn").click()
-
-        driver.implicitly_wait(1)
-
-        st.update("正在查找上报信息...")
+        st.update("正在查找上报信息")
 
         driver.switch_to.default_content()
 
@@ -67,78 +71,181 @@ def _report(user: str, driver: webdriver.Remote = None):
             email([infos.get("to")], "未找到上报信息")
             return
 
-        st.update("正在进入上报页面...")
+        st.update("正在进入上报页面")
 
         span.click()
 
         driver.implicitly_wait(10)
 
-        st.update("正在填写上报信息...")
+        st.update("正在填写上报信息")
 
         table = driver.find_element(By.TAG_NAME, "table")
         trs = table.find_elements(By.TAG_NAME, "tr")
 
-        tr4 = trs[4]
-        td2 = tr4.find_elements(By.TAG_NAME, "td")[1]
-        td4 = tr4.find_elements(By.TAG_NAME, "td")[3]
+        if infos.get("status") == 0:  # 在校
+            tr4 = trs[4]
+            td2 = tr4.find_elements(By.TAG_NAME, "td")[1]
+            td4 = tr4.find_elements(By.TAG_NAME, "td")[3]
 
-        td2.find_element(By.CLASS_NAME, "el-input__suffix").click()
+            td2.find_element(By.CLASS_NAME, "el-input__suffix").click()
+            driver.find_elements(By.CLASS_NAME, "el-select-dropdown__item")[2].click()
 
-        driver.find_elements(By.CLASS_NAME, "el-select-dropdown__item")[2].click()
+            td4.find_element(By.CLASS_NAME, "el-input__suffix").click()
+            driver.find_elements(By.CLASS_NAME, "el-select-dropdown__item")[4].click()
 
-        td4.find_element(By.CLASS_NAME, "el-input__suffix").click()
-        driver.find_elements(By.CLASS_NAME, "el-select-dropdown__item")[4].click()
+            tr11 = trs[11]
+            td4 = tr11.find_elements(By.TAG_NAME, "td")[3]
+            td4.find_element(By.TAG_NAME, "span").click()
 
-        tr11 = trs[11]
-        td4 = tr11.find_elements(By.TAG_NAME, "td")[3]
-        td4.find_element(By.TAG_NAME, "span").click()
+            region_panel = driver.find_element(By.CLASS_NAME, "showdregions")
 
-        region_panel = driver.find_element(By.CLASS_NAME, "showdregions")
+            provinces = region_panel.find_element(By.CLASS_NAME, "provinces")
+            sps = provinces.find_elements(By.TAG_NAME, "span")
 
-        provinces = region_panel.find_element(By.CLASS_NAME, "provinces")
-        sps = provinces.find_elements(By.TAG_NAME, "span")
-
-        for sp in sps:
-            if sp.text == infos.get("province"):
-                sp.click()
-                break
-
-        cities = region_panel.find_element(By.CLASS_NAME, "city")
-        sps = cities.find_elements(By.TAG_NAME, "span")
-
-        for sp in sps:
-            if sp.text == infos.get("city"):
-                sp.click()
-                break
-
-        if infos.get("district"):
-            county = region_panel.find_element(By.CLASS_NAME, "county")
-            sps = county.find_elements(By.TAG_NAME, "span")
             for sp in sps:
-                if sp.text == infos.get("district"):
+                if sp.text == infos.get("province"):
                     sp.click()
                     break
 
-        address = region_panel.find_element(By.CLASS_NAME, "address")
-        textarea = address.find_element(By.TAG_NAME, "textarea")
-        textarea.send_keys(infos.get("address"))
-        region_panel.find_element(By.CLASS_NAME, "sure").click()
+            cities = region_panel.find_element(By.CLASS_NAME, "city")
+            sps = cities.find_elements(By.TAG_NAME, "span")
 
-        tr12 = trs[12]
-        td2 = tr12.find_elements(By.TAG_NAME, "td")[1]
-        td2.find_element(By.CLASS_NAME, "el-input__suffix").click()
-        driver.find_elements(By.CLASS_NAME, "el-select-dropdown__item")[6].click()
+            for sp in sps:
+                if sp.text == infos.get("city"):
+                    sp.click()
+                    break
 
-        tr15 = trs[15]
-        td1 = tr15.find_elements(By.TAG_NAME, "td")[0]
-        td1.find_element(By.TAG_NAME, "input").click()
+            if infos.get("district"):
+                county = region_panel.find_element(By.CLASS_NAME, "county")
+                sps = county.find_elements(By.TAG_NAME, "span")
+                for sp in sps:
+                    if sp.text == infos.get("district"):
+                        sp.click()
+                        break
 
-        st.update("正在提交上报信息...")
+            address = region_panel.find_element(By.CLASS_NAME, "address")
+            textarea = address.find_element(By.TAG_NAME, "textarea")
+            textarea.send_keys(infos.get("address"))
+            region_panel.find_element(By.CLASS_NAME, "sure").click()
 
-        driver.implicitly_wait(1)
+            tr12 = trs[12]
+            td2 = tr12.find_elements(By.TAG_NAME, "td")[1]
+            td2.find_element(By.CLASS_NAME, "el-input__suffix").click()
+            driver.find_elements(By.CLASS_NAME, "el-select-dropdown__item")[6].click()
 
-        driver.find_element(By.CLASS_NAME, "help_btn").click()
-        driver.find_element(By.CLASS_NAME, "zl-button-primary").click()
+            tr15 = trs[15]
+            td1 = tr15.find_elements(By.TAG_NAME, "td")[0]
+            td1.find_element(By.TAG_NAME, "input").click()
+        else:  # 离校
+            tr4 = trs[4]
+            td2 = tr4.find_elements(By.TAG_NAME, "td")[1]
+            td2.find_element(By.TAG_NAME, "span").click()
+            driver.find_elements(By.CLASS_NAME, "el-select-dropdown__item")[3].click()
+
+            tr5 = trs[5]
+            td2 = tr5.find_elements(By.TAG_NAME, "td")[1]
+            td2.find_element(By.TAG_NAME, "span").click()
+
+            region_panel = td2.find_element(By.CLASS_NAME, "showdregions")
+            provinces = region_panel.find_element(
+                By.CLASS_NAME, "provinces"
+            ).find_elements(By.TAG_NAME, "span")
+            for sp in provinces:
+                if sp.text == infos.get("province"):
+                    sp.click()
+                    break
+            cities = region_panel.find_element(By.CLASS_NAME, "city").find_elements(
+                By.TAG_NAME, "span"
+            )
+            for sp in cities:
+                if sp.text == infos.get("city"):
+                    sp.click()
+                    break
+            if infos.get("district"):
+                county = region_panel.find_element(
+                    By.CLASS_NAME, "county"
+                ).find_elements(By.TAG_NAME, "span")
+                for sp in county:
+                    if sp.text == infos.get("district"):
+                        sp.click()
+                        break
+            address = region_panel.find_element(By.CLASS_NAME, "address")
+            textarea = address.find_element(By.TAG_NAME, "textarea")
+            textarea.clear()
+            textarea.send_keys(infos.get("address"))
+            region_panel.find_element(By.CLASS_NAME, "sure").click()
+
+            tr6 = trs[6]
+            td2 = tr6.find_elements(By.TAG_NAME, "td")[1]
+            td2.find_element(By.TAG_NAME, "input").click()
+            driver.find_elements(By.CLASS_NAME, "el-select-dropdown__item")[
+                9 + infos.get("status")
+            ].click()
+
+            tr7 = trs[7]
+            td2 = tr7.find_elements(By.TAG_NAME, "td")[1]
+            td2.find_element(By.TAG_NAME, "input").click()
+            driver.find_elements(By.CLASS_NAME, "el-select-dropdown__item")[12].click()
+
+            tr9 = trs[9]
+            td2 = tr9.find_elements(By.TAG_NAME, "td")[1]
+            td2.find_element(By.TAG_NAME, "input").click()
+            driver.find_elements(By.CLASS_NAME, "el-select-dropdown__item")[12].click()
+
+            tr10 = trs[10]
+            td2 = tr10.find_elements(By.TAG_NAME, "td")[1]
+            td2.find_element(By.TAG_NAME, "input").click()
+            driver.find_elements(By.CLASS_NAME, "el-select-dropdown__item")[12].click()
+
+            tr11 = trs[11]
+            td4 = tr11.find_elements(By.TAG_NAME, "td")[3]
+            td4.find_element(By.TAG_NAME, "span").click()
+
+            region_panel = td4.find_element(By.CLASS_NAME, "showdregions")
+            provinces = region_panel.find_element(
+                By.CLASS_NAME, "provinces"
+            ).find_elements(By.TAG_NAME, "span")
+            for sp in provinces:
+                if sp.text == infos.get("province"):
+                    sp.click()
+                    break
+            cities = region_panel.find_element(By.CLASS_NAME, "city").find_elements(
+                By.TAG_NAME, "span"
+            )
+            for sp in cities:
+                if sp.text == infos.get("city"):
+                    sp.click()
+                    break
+            if infos.get("district"):
+                county = region_panel.find_element(
+                    By.CLASS_NAME, "county"
+                ).find_elements(By.TAG_NAME, "span")
+                for sp in county:
+                    if sp.text == infos.get("district"):
+                        sp.click()
+                        break
+            address = region_panel.find_element(By.CLASS_NAME, "address")
+            textarea = address.find_element(By.TAG_NAME, "textarea")
+            textarea.clear()
+            textarea.send_keys(infos.get("address"))
+            region_panel.find_element(By.CLASS_NAME, "sure").click()
+
+            tr12 = trs[12]
+            td2 = tr12.find_elements(By.TAG_NAME, "td")[1]
+            td2.find_element(By.CLASS_NAME, "el-input__suffix").click()
+            driver.find_elements(By.CLASS_NAME, "el-select-dropdown__item")[12].click()
+
+            tr15 = trs[15]
+            td1 = tr15.find_elements(By.TAG_NAME, "td")[0]
+            td1.find_element(By.TAG_NAME, "input").click()
+
+        st.update("正在提交上报信息")
+
+        if not debug:
+            driver.implicitly_wait(1)
+
+            driver.find_element(By.CLASS_NAME, "help_btn").click()
+            driver.find_element(By.CLASS_NAME, "zl-button-primary").click()
 
         driver.implicitly_wait(10)  # 等待提交成功
 
@@ -147,31 +254,35 @@ def _report(user: str, driver: webdriver.Remote = None):
 
 
 @app.command()
-def report(user: str):
+def report(user: str, _debug: bool = False):
     """
     自动上报
+
+    :param user: 用户名
+    :param _debug: 是否调试模式
     """
     from selenium import webdriver
 
     try:
         driver: webdriver.WebDriver = None
-        with QproDefaultConsole.status("正在打开浏览器...") as st:
-            if remote_url := settings.get("remote-url", None):
-                st.update("正在打开远程浏览器...")
+        with QproDefaultConsole.status("正在打开浏览器") as st:
+            if remote_url := settings.get("remote-url", None) and not _debug:
+                st.update("正在打开远程浏览器")
                 driver = webdriver.Remote(
                     command_executor=remote_url,
                     desired_capabilities=webdriver.DesiredCapabilities.CHROME,
                 )
             else:
-                from selenium.webdriver.chrome.options import Options
-
-                options = Options()
-                options.add_argument("--headless")
-                driver = webdriver.Chrome(options=options)
-        _report(user, driver)
+                driver = webdriver.Chrome()
+        _report(user, driver, _debug)
         driver.close()
     except Exception as e:
         from QuickProject import QproErrorString
+
+        if _debug:
+            from selenium.webdriver.common.by import By
+
+            return By, driver, _config.select(user), e
 
         if remote_url:
             driver.close()
@@ -212,7 +323,7 @@ def update():
     """
     from . import external_exec
 
-    with QproDefaultConsole.status("正在更新..."):
+    with QproDefaultConsole.status("正在更新"):
         external_exec(
             f"{user_pip} install git+https://github.com/Rhythmicc/EservAutoReport.git -U",
             True,
